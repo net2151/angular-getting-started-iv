@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">getting-started-iv-angular</string>
+    <string name="title_activity_main">getting-started-iv-angular</string>
+    <string name="package_name">io.ionic.gettingstartedivangular</string>
+    <string name="custom_url_scheme">io.ionic.gettingstartedivangular</string>
+</resources>

@@ -1,0 +1,6 @@
+{
+	"appId": "io.ionic.gettingstartedivangular",
+	"appName": "getting-started-iv-angular",
+	"webDir": "www",
+	"bundledWebRuntime": false
+}
