@@ -46,7 +46,7 @@ export class VaultService {
       this.state.isLocked = false;
     };
 
-    Device.isHideScreenOnBackgroundEnabled.then((value) => {
+    Device.isHideScreenOnBackgroundEnabled().then(value => {
       this.state.privacyScreen = value;
     });
 

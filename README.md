@@ -341,7 +341,7 @@ Then add the following code to the `setup()` function:
   };
   ...
   constructor() {
-    Device.isHideScreenOnBackgroundEnabled.then((value) => {
+    Device.isHideScreenOnBackgroundEnabled().then(value => {
       this.state.privacyScreen = value;
     });
   ...
