@@ -34,31 +34,29 @@ export class VaultService {
     customPasscodeInvalidUnlockAttempts: 2,
     unlockVaultOnLoad: false,
   };
-  vault: Vault = new Vault(this.config);
+  vault: Vault;
 
   constructor() {
-    this.vault.onLock = () => {
+    this.init();
+  }
+
+  async init() {
+    this.vault = new Vault(this.config);
+    this.vault.onLock(() => {
       this.state.isLocked = true;
       this.state.session = undefined;
-    };
+    });
 
-    this.vault.onUnlock = () => {
+    this.vault.onUnlock(() => {
       this.state.isLocked = false;
-    };
-
-    Device.isHideScreenOnBackgroundEnabled().then(value => {
-      this.state.privacyScreen = value;
     });
-
-    Device.isBiometricsEnabled().then(enabled => {
-      this.state.canUseBiometrics = enabled;
-    });
-
-    this.checkVaultExists();
+    this.state.privacyScreen = await Device.isHideScreenOnBackgroundEnabled();
+    this.state.canUseBiometrics = await Device.isBiometricsEnabled();
+    await this.checkVaultExists();
   }
 
   async checkVaultExists(): Promise<void> {
-    await this.vault.doesVaultExist();
+    this.state.vaultExists = await this.vault.doesVaultExist();
   }
 
   async setSession(value: string): Promise<void> {
@@ -72,12 +70,12 @@ export class VaultService {
     this.state.session = value;
   }
 
-  lockVault() {
-    this.vault.lock();
+  async lockVault() {
+    await this.vault.lock();
   }
 
-  unlockVault() {
-    this.vault.unlock();
+  async unlockVault() {
+    await this.vault.unlock();
   }
 
   setPrivacyScreen(enabled: boolean) {

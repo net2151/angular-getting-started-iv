@@ -94,9 +94,15 @@ export class VaultService {
     customPasscodeInvalidUnlockAttempts: 2,
     unlockVaultOnLoad: false,
   };
-  vault: Vault = new Vault(this.config);
+  vault: Vault;
 
-  constructor() { }
+  constructor() {
+    this.init();
+  }
+
+  async init() {
+    this.vault = new Vault(this.config);
+  }
 
   async setSession(value: string): Promise<void> {
     this.state.session = value;
@@ -125,7 +131,7 @@ Let's look at this file section by section. The first thing we do is define a co
   };
 ```
 
-Next, we will define a key for storing data. All data within the vault is stored as a key-value pair, and you can store multiple key-value pairs within a single vault. We will also create the vault as well as a reactive property that will be used to reflect the current `session` data to the outside world.
+Next, we will define a key for storing data. All data within the vault is stored as a key-value pair, and you can store multiple key-value pairs within a single vault. We will also create the vault as well as an object that reflects that state of the vault so that the current `session` data can be displayed.
 
 ```TypeScript
   public state: VaultServiceState = {
@@ -133,9 +139,18 @@ Next, we will define a key for storing data. All data within the vault is stored
   };
   key = 'sessionData';
 
-  vault: Vault = new Vault(this.config);
+  vault: Vault;
 
+  constructor() {
+    this.init();
+  }
+
+  async init() {
+    this.vault = new Vault(this.config);
+  }
 ```
+
+**Note:** Constructors cannot contain the await keyword. To get around this we asynchronously calling the init method. At the moment this method does not have asynchronous methods but it soon will.
 
 Finally, we define methods for `setSession` and `restoreSession`:
 
@@ -242,12 +257,12 @@ Now that we are storing data in the vault, it would be helpful to lock and unloc
 Add the following code to `vault.service.ts`:
 
 ```TypeScript
-  lockVault() {
-    this.vault.lock();
+  async lockVault() {
+    await this.vault.lock();
   }
 
-  unlockVault() {
-    this.vault.unlock();
+  async unlockVault() {
+    await this.vault.unlock();
   }
 ```
 
@@ -284,17 +299,23 @@ Add the following code to `src/vault.service.ts`:
 
 ```TypeScript
 ...
-  public vaultIsLocked: boolean = false;
+  public state: VaultServiceState = {
+    session: '',
+    isLocked: false,
+  };
 
-  constructor() {
-    this.vault.onLock = () => {
-      this.vaultIsLocked = true;
-      this.session = undefined;
-    };
+...  
 
-    this.vault.onUnlock = () => {
-      this.vaultIsLocked = false;
-    };
+  async init() {
+    this.vault = new Vault(this.config);
+    this.vault.onLock(() => {
+      this.state.isLocked = true;
+      this.state.session = undefined;
+    });
+
+    this.vault.onUnlock(() => {
+      this.state.isLocked = false;
+    });
   }
 ```
 
@@ -339,11 +360,12 @@ Then add the following code to the `setup()` function:
     isLocked: false,
     privacyScreen: false
   };
-  ...
-  constructor() {
-    Device.isHideScreenOnBackgroundEnabled().then(value => {
-      this.state.privacyScreen = value;
-    });
+
+...
+
+  async init() {
+...
+    this.state.privacyScreen = await Device.isHideScreenOnBackgroundEnabled();
   ...
 
   setPrivacyScreen(enabled: boolean) {
@@ -489,12 +511,10 @@ Add a property to the `VaultServiceState` interface:
 }
 ```
 
-Initialize `canUseBiometrics` in the constructor of `VaultService`:
+Initialize `canUseBiometrics` in the `init` method of `VaultService`:
 
 ```TypeScript
-    Device.isBiometricsEnabled().then(enabled => {
-      this.state.canUseBiometrics = enabled;
-    });
+    this.state.canUseBiometrics = await Device.isBiometricsEnabled();
 ```
 
 Notice that we are using the `Device` API again here to determine if biometrics are both supported by the current device as well as enabled by the user. We don't want users to be able to choose that option unless the biometrics are properly set up on the device.
@@ -532,22 +552,15 @@ Let's then add a `clearVault()` function within `VaultService`. This function wi
 
 In order to see whether the vault exists we need to create a method in `VaultService`:
 ```typescript
-  async checkVaultExists(): Promise<void> {
-    await this.vault.doesVaultExist();
+ async checkVaultExists(): Promise<void> {
+    this.state.vaultExists = await this.vault.doesVaultExist();
   }
 ```
 
-Lets add this to the `constructor`:
+Lets call this method in the `init` method, in the `clearVault` method and in the `setSession` method:
 ```typescript
-    this.checkVaultExists();
+    await this.checkVaultExists();
 ```
-
-Also add to `clearVault` and `setSession`:
-```typescript
-   await this.checkVaultExists();
-```
-
-Next add to the method `clearVault`:
 
 With that in place, open the `home.page.html` file and add a button to clear the vault by calling `clearVault()` on click:
 ```html
