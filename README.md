@@ -23,7 +23,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'io.ionic.gettingstartedivangular',
   appName: 'getting-started-iv-angular',
-  webDir: 'dist',
+  webDir: 'www',
   bundledWebRuntime: false
 };
 
@@ -168,13 +168,13 @@ Finally, we define methods for `setSession` and `restoreSession`:
 
 **Note:** rather than create define functions such as `setSession()` and `restoreSession()`, we _could_ expose the `vault` from service and use its API directly in the rest of the application. However, that would expose the rest of the application to potential API changes as well as potentially result in duplicated code. In my opinion, it is a much better option to encapsulate an interface for Identity Vault to the rest of the application. This makes the code more maintainable and easier to debug.
 
-Now that we have the vault in place, let's switch over to `src/app/home/home-page.ts` and code some simple interactions with the vault. Here is a snapshot of what we will change:
+Now that we have the vault in place, let's switch over to `HomePage` component and implement some simple interactions with the vault. Here is a snapshot of what we will change:
 
 1. replace the "container" `div` with a list of form controls
 1. add a `setup()` function
 1. remove the existing styling
 
-When we are done, the page will look like this:
+When we are done, `src/app/home/home.page.html` will look like:
 
 ```HTML
 <ion-header [translucent]="true">
@@ -219,10 +219,11 @@ When we are done, the page will look like this:
 </ion-content>
 ```
 
-`src/app/home/home-page.ts` will look like:
+`src/app/home/home.page.ts` will look like:
+
 ```TypeScript
 import { Component } from '@angular/core';
-import { VaultService } from '../vault.service';
+import { VaultService, VaultServiceState } from '../vault.service';
 
 @Component({
   selector: 'app-home',
@@ -248,7 +249,7 @@ export class HomePage {
 
 **Notes:**
 
-1. As we continue with this tutorial, we will just provide the new markup or code that is required. Make sure to add the correct imports and component definitions will be up to you.
+1. As we continue with this tutorial, we will just provide the new markup or code that is required. Be sure to add the correct TypeScript imports as you go.
 
 ## Locking and Unlocking the Vault
 
