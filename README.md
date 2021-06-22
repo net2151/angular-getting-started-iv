@@ -481,7 +481,7 @@ We can now add a group of radio buttons to our `Home` page component:
 
 ```html
     <ion-item>
-      <ion-radio-group [ngModel]="state.lockType" (ionChange)="setLockType()">
+      <ion-radio-group [(ngModel)]="state.lockType" (ionChange)="setLockType()">
         <ion-list-header>
           <ion-label> Vault Locking Mechanism </ion-label>
         </ion-list-header>
