@@ -480,7 +480,7 @@ We can now add a group of radio buttons to our `Home` page component:
 
 ```html
     <ion-item>
-      <ion-radio-group [ngModel]="state.lockType">
+      <ion-radio-group [ngModel]="state.lockType" (ionChange)="setLockType()">
         <ion-list-header>
           <ion-label> Vault Locking Mechanism </ion-label>
         </ion-list-header>
@@ -501,6 +501,13 @@ We can now add a group of radio buttons to our `Home` page component:
         </ion-item>
       </ion-radio-group>
     </ion-item>
+```
+
+With the additional method setLockType in the code for `Home` page component:
+```typescript
+  setLockType() {
+    this.vaultService.setLockType();
+  }
 ```
 
 Notice for the "Use Biometric" radio button, we are disabling it based on a `canUseBiometrics` value. We will need to code for that.

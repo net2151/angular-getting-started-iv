@@ -29,6 +29,10 @@ export class HomePage {
     this.vaultService.unlockVault();
   }
 
+  setLockType() {
+    this.vaultService.setLockType();
+  }
+
   setPrivacyScreen() {
     this.vaultService.setPrivacyScreen(this.state.privacyScreen);
   }
