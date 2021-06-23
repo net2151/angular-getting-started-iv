@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 import { Vault, IdentityVaultConfig, Device } from '@ionic-enterprise/identity-vault';
 
 export interface VaultServiceState {
@@ -36,20 +36,25 @@ export class VaultService {
   };
   vault: Vault;
 
-  constructor() {
+  constructor(private ngZone: NgZone) {
     this.init();
   }
 
   async init() {
     this.vault = new Vault(this.config);
     this.vault.onLock(() => {
-      this.state.isLocked = true;
-      this.state.session = undefined;
+      this.ngZone.run(() => {
+        this.state.isLocked = true;
+        this.state.session = undefined;
+      });
     });
 
     this.vault.onUnlock(() => {
-      this.state.isLocked = false;
+      this.ngZone.run(() => {
+        this.state.isLocked = false;    
+      });
     });
+
     this.state.privacyScreen = await Device.isHideScreenOnBackgroundEnabled();
     this.state.canUseBiometrics = await Device.isBiometricsEnabled();
     await this.checkVaultExists();
