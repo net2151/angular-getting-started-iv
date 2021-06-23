@@ -296,9 +296,12 @@ and in `home.page.ts`:
 
 We can now lock and unlock the vault, though in our current case we cannot really tell. Our application should react in some way when the vault is locked. For example, we may want to clear specific data from memory. We may also wish to redirect to a page that will only allow the user to proceed if they unlock the vault. In our case, we will just clear the `session` and have a flag that we can use to visually indicate if the vault is locked or not. We can do that by using the vault's `onLock` event.
 
+**Note:** The events of Identity Vault are not aware of the change detection system of Angular. We use the `ngZone` `run` method to ensure our user interface updates on changes. 
+
 Add the following code to `src/vault.service.ts`:
 
 ```TypeScript
+import { Injectable, NgZone } from '@angular/core';
 ...
   public state: VaultServiceState = {
     session: '',
@@ -306,16 +309,23 @@ Add the following code to `src/vault.service.ts`:
   };
 
 ...  
+  constructor(private ngZone: NgZone) {
+    this.init();
+  }
 
   async init() {
     this.vault = new Vault(this.config);
     this.vault.onLock(() => {
-      this.state.isLocked = true;
-      this.state.session = undefined;
+      this.ngZone.run(() => {
+        this.state.isLocked = true;
+        this.state.session = undefined;
+      });
     });
 
     this.vault.onUnlock(() => {
-      this.state.isLocked = false;
+      this.ngZone.run(() => {
+        this.state.isLocked = false;    
+      });
     });
   }
 ```
