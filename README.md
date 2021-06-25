@@ -105,7 +105,6 @@ export class VaultService {
   async setSession(value: string): Promise<void> {
     this.state.session = value;
     await this.vault.setValue('sessionData', value);
-    await this.checkVaultExists();
   }
 
   async restoreSession() {
@@ -149,7 +148,6 @@ All data within the vault is stored as a key-value pair, and you can store multi
   async setSession(value: string): Promise<void> {
     this.state.session = value;
     await this.vault.setValue('sessionData', value);
-    await this.checkVaultExists();
   }
 
   async restoreSession() {
