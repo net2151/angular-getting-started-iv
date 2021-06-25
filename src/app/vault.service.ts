@@ -1,5 +1,5 @@
 import { Injectable, NgZone } from '@angular/core';
-import { Vault, IdentityVaultConfig, Device } from '@ionic-enterprise/identity-vault';
+import { Vault, Device, DeviceSecurityType, VaultType } from '@ionic-enterprise/identity-vault';
 
 export interface VaultServiceState {
   session: string;
@@ -21,19 +21,8 @@ export class VaultService {
     lockType: 'NoLocking',
     canUseBiometrics: false,
     vaultExists: false
-  };
+  };  
 
-  key = 'sessionData';
-
-  config: IdentityVaultConfig = {
-    key: 'io.ionic.getstartedivangular',
-    type: 'SecureStorage',
-    deviceSecurityType: 'SystemPasscode',
-    lockAfterBackgrounded: 2000,
-    shouldClearVaultAfterTooManyFailedAttempts: true,
-    customPasscodeInvalidUnlockAttempts: 2,
-    unlockVaultOnLoad: false,
-  };
   vault: Vault;
 
   constructor(private ngZone: NgZone) {
@@ -41,7 +30,16 @@ export class VaultService {
   }
 
   async init() {
-    this.vault = new Vault(this.config);
+    this.vault = new Vault({
+      key: 'io.ionic.getstartedivangular',
+      type: 'SecureStorage',
+      deviceSecurityType: 'SystemPasscode',
+      lockAfterBackgrounded: 2000,
+      shouldClearVaultAfterTooManyFailedAttempts: true,
+      customPasscodeInvalidUnlockAttempts: 2,
+      unlockVaultOnLoad: false,
+    });
+
     this.vault.onLock(() => {
       this.ngZone.run(() => {
         this.state.isLocked = true;
@@ -51,7 +49,7 @@ export class VaultService {
 
     this.vault.onUnlock(() => {
       this.ngZone.run(() => {
-        this.state.isLocked = false;    
+        this.state.isLocked = false;
       });
     });
 
@@ -66,12 +64,12 @@ export class VaultService {
 
   async setSession(value: string): Promise<void> {
     this.state.session = value;
-    await this.vault.setValue(this.key, value);
+    await this.vault.setValue('sessionData', value);
     await this.checkVaultExists();
   }
 
   async restoreSession() {
-    const value = await this.vault.getValue(this.key);
+    const value = await this.vault.getValue('sessionData');
     this.state.session = value;
   }
 
@@ -89,22 +87,25 @@ export class VaultService {
   }
 
   setLockType() {
+    let type: VaultType;
+    let deviceSecurityType: DeviceSecurityType;
+
     switch (this.state.lockType) {
       case 'Biometrics':
-        this.config.type = 'DeviceSecurity';
-        this.config.deviceSecurityType = 'Biometrics';
+        type = 'DeviceSecurity';
+        deviceSecurityType = 'Biometrics';
         break;
 
       case 'SystemPasscode':
-        this.config.type = 'DeviceSecurity';
-        this.config.deviceSecurityType = 'SystemPasscode';
+        type = 'DeviceSecurity';
+        deviceSecurityType = 'SystemPasscode';
         break;
 
       default:
-        this.config.type = 'SecureStorage';
-        this.config.deviceSecurityType = 'SystemPasscode';
+        type = 'SecureStorage';
+        deviceSecurityType = 'SystemPasscode';
     }
-    this.vault.updateConfig(this.config);
+    this.vault.updateConfig({ ...this.vault.config, type, deviceSecurityType });
   }
 
   async clearVault() {

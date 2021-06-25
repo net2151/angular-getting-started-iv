@@ -43,7 +43,7 @@ Finally, in order to ensure that a `cap copy` happens with each build, add it to
 ```JSON
   "scripts": {
     "build": "ng build && cap copy",
-    ...
+...
   },
 ```
 
@@ -69,7 +69,7 @@ This will create a file named `src/app/vault.service.ts`. Within this file, we w
 
 ```TypeScript
 import { Injectable } from '@angular/core';
-import { Vault, IdentityVaultConfig } from '@ionic-enterprise/identity-vault';
+import { Vault } from '@ionic-enterprise/identity-vault';
 
 export interface VaultServiceState {
   session: string;  
@@ -85,15 +85,6 @@ export class VaultService {
 
   key = 'sessionData';
 
-  config: IdentityVaultConfig = {
-    key: 'io.ionic.getstartedivangular',
-    type: 'SecureStorage',
-    deviceSecurityType: 'SystemPasscode',
-    lockAfterBackgrounded: 2000,
-    shouldClearVaultAfterTooManyFailedAttempts: true,
-    customPasscodeInvalidUnlockAttempts: 2,
-    unlockVaultOnLoad: false,
-  };
   vault: Vault;
 
   constructor() {
@@ -101,43 +92,35 @@ export class VaultService {
   }
 
   async init() {
-    this.vault = new Vault(this.config);
-  }
+    this.vault = new Vault({
+      key: 'io.ionic.getstartedivangular',
+      type: 'SecureStorage',
+      deviceSecurityType: 'SystemPasscode',
+      lockAfterBackgrounded: 2000,
+      shouldClearVaultAfterTooManyFailedAttempts: true,
+      customPasscodeInvalidUnlockAttempts: 2,
+      unlockVaultOnLoad: false,
+    });
 
   async setSession(value: string): Promise<void> {
     this.state.session = value;
-    await this.vault.setValue(this.key, value);
+    await this.vault.setValue('sessionData', value);
+    await this.checkVaultExists();
   }
 
   async restoreSession() {
-    const value = await this.vault.getValue(this.key);
+    const value = await this.vault.getValue('sessionData');
     this.state.session = value;
   }
 }
-
 ```
 
-Let's look at this file section by section. The first thing we do is define a configuration for our vault. The `key` gives the vault a name. The other properties provide a default behavior for our vault, and as we shall see later, can be changed as we use the vault.
-
-```TypeScript
-  config: IdentityVaultConfig = {
-    key: 'io.ionic.getstartedivangular',
-    type: 'SecureStorage',
-    deviceSecurityType: 'SystemPasscode',
-    lockAfterBackgrounded: 2000,
-    shouldClearVaultAfterTooManyFailedAttempts: true,
-    customPasscodeInvalidUnlockAttempts: 2,
-    unlockVaultOnLoad: false,
-  };
-```
-
-Next, we will define a key for storing data. All data within the vault is stored as a key-value pair, and you can store multiple key-value pairs within a single vault. We will also create the vault as well as an object that reflects that state of the vault so that the current `session` data can be displayed.
+Let's look at this file section by section. The first thing we do is define our desired configuration when creating the vault. The `key` gives the vault a name. The `state` object is used to store information that is displayed on the page, and as we shall see later, can be changed as we use the vault.
 
 ```TypeScript
   public state: VaultServiceState = {
     session: ''    
   };
-  key = 'sessionData';
 
   vault: Vault;
 
@@ -146,22 +129,31 @@ Next, we will define a key for storing data. All data within the vault is stored
   }
 
   async init() {
-    this.vault = new Vault(this.config);
-  }
+    this.vault = new Vault({
+      key: 'io.ionic.getstartedivangular',
+      type: 'SecureStorage',
+      deviceSecurityType: 'SystemPasscode',
+      lockAfterBackgrounded: 2000,
+      shouldClearVaultAfterTooManyFailedAttempts: true,
+      customPasscodeInvalidUnlockAttempts: 2,
+      unlockVaultOnLoad: false,
+    });
 ```
 
-**Note:** Constructors cannot contain the await keyword. To get around this we asynchronously calling the init method. At the moment this method does not have asynchronous methods but it soon will.
+**Note:** Constructors cannot contain the `await` keyword. To get around this we asynchronously calling the `init` method. At the moment this method does not have asynchronous methods but it soon will.
 
-Finally, we define methods for `setSession` and `restoreSession`:
+All data within the vault is stored as a key-value pair, and you can store multiple key-value pairs within a single vault. We define methods for `setSession` and `restoreSession` that set and get data for a key named `sessionData`.
+
 
 ```TypeScript
   async setSession(value: string): Promise<void> {
     this.state.session = value;
-    await this.vault.setValue(this.key, value);
+    await this.vault.setValue('sessionData', value);
+    await this.checkVaultExists();
   }
 
   async restoreSession() {
-    const value = await this.vault.getValue(this.key);
+    const value = await this.vault.getValue('sessionData');
     this.state.session = value;
   }
 ```
@@ -247,9 +239,7 @@ export class HomePage {
 }
 ```
 
-**Notes:**
-
-1. As we continue with this tutorial, we will just provide the new markup or code that is required. Be sure to add the correct TypeScript imports as you go.
+> As we continue with this tutorial, we will just provide the new markup or code that is required. Be sure to add the correct TypeScript imports as you go.
 
 ## Locking and Unlocking the Vault
 
@@ -418,23 +408,23 @@ In addition to these types, if `DeviceSecurity` is used, it is further refined b
 - `SystemPasscode`: Use the system passcode entry screen.
 - `Both`: Use `Biometrics` with the `SystemPasscode` as a backup when `Biometrics` fails.
 
-We specified `SecureStorage` when we set up the vault:
+We specified `SecureStorage` when we set up the vault and this type will be used if the vault does not exist:
 
 ```TypeScript
-const config: IdentityVaultConfig = {
-  key: 'io.ionic.getstartedivangular',
-  type: 'SecureStorage',
-  deviceSecurityType: 'SystemPasscode',
-  lockAfterBackgrounded: 2000,
-  shouldClearVaultAfterTooManyFailedAttempts: true,
-  customPasscodeInvalidUnlockAttempts: 2,
-  unlockVaultOnLoad: false,
-};
+    this.vault = new Vault({
+      key: 'io.ionic.getstartedivangular',
+      type: 'SecureStorage',
+      deviceSecurityType: 'SystemPasscode',
+      lockAfterBackgrounded: 2000,
+      shouldClearVaultAfterTooManyFailedAttempts: true,
+      customPasscodeInvalidUnlockAttempts: 2,
+      unlockVaultOnLoad: false,
+    });
 ```
 
 However, we can use the vault's `updateConfig()` method to change this at run time.
 
-In our application,we don't want to use every possible combination. Rather than exposing the raw `type` and `deviceSecurityType` values to the rest of the application, let's define the types of authentication we _do_ want to support:
+In our application, we don't want to use every possible combination. Rather than exposing the raw `type` and `deviceSecurityType` values to the rest of the application, let's define the types of authentication we _do_ want to support:
 
 `NoLocking`: We want to store the session data securely, but never lock it.
 `Biometrics`: We want to use the device's biometric mechanism to unlock the vault when it is locked.
@@ -467,22 +457,25 @@ Next, we will define a method called `setLockType` in `vault.service.ts`:
 
 ```TypeScript
   setLockType() {
-    switch(this.state.lockType) {
+    let type: VaultType;
+    let deviceSecurityType: DeviceSecurityType;
+
+    switch (this.state.lockType) {
       case 'Biometrics':
-        this.config.type = 'DeviceSecurity';
-        this.config.deviceSecurityType = 'Biometrics';
+        type = 'DeviceSecurity';
+        deviceSecurityType = 'Biometrics';
         break;
 
       case 'SystemPasscode':
-        this.config.type = 'DeviceSecurity';
-        this.config.deviceSecurityType = 'SystemPasscode';
+        type = 'DeviceSecurity';
+        deviceSecurityType = 'SystemPasscode';
         break;
 
       default:
-        this.config.type = 'SecureStorage';
-        this.config.deviceSecurityType = 'SystemPasscode';
+        type = 'SecureStorage';
+        deviceSecurityType = 'SystemPasscode';
     }
-    this.vault.updateConfig(this.config);
+    this.vault.updateConfig({ ...this.vault.config, type, deviceSecurityType });
   }
 ```
 
