@@ -1,4 +1,4 @@
-# Getting Started with Identity Vault in `@ionic/angular`
+# Getting Started with Identity Vault in @ionic/angular
 
 This application walks through the basic setup and use of Ionic's Identity Vault in an `@ionic/angular` application. Rather than connecting to a back end service and storing the session data this application will just store information that you type in and tell it to store. Almost all of the work done here will be concentrated on a couple of files:
 
@@ -94,8 +94,8 @@ export class VaultService {
   async init() {
     this.vault = new Vault({
       key: 'io.ionic.getstartedivangular',
-      type: 'SecureStorage',
-      deviceSecurityType: 'SystemPasscode',
+      type: VaultType.SecureStorage,
+      deviceSecurityType: DeviceSecurityType.SystemPasscode,
       lockAfterBackgrounded: 2000,
       shouldClearVaultAfterTooManyFailedAttempts: true,
       customPasscodeInvalidUnlockAttempts: 2,
@@ -130,8 +130,8 @@ Let's look at this file section by section. The first thing we do is define our 
   async init() {
     this.vault = new Vault({
       key: 'io.ionic.getstartedivangular',
-      type: 'SecureStorage',
-      deviceSecurityType: 'SystemPasscode',
+      type: VaultType.SecureStorage,
+      deviceSecurityType: DeviceSecurityType.SystemPasscode,
       lockAfterBackgrounded: 2000,
       shouldClearVaultAfterTooManyFailedAttempts: true,
       customPasscodeInvalidUnlockAttempts: 2,
@@ -331,11 +331,11 @@ Then update `home.page.html` to display the `vaultIsLocked` value along with the
 
 Build and run the application now. When the user clicks the "Lock Vault" button, the "Session Data" will be cleared out and the "Vault is Locked" will show as false. Clicking "Unlock Vault" will cause "Vault is Locked" to show as true again. Notice as well that you can lock the vault, but then also unlock it and get the session data base by clicking "Restore Session Data".
 
-In that latter case, you didn't have to do anything to unlock the vault. That is because we are not using a type of vault that actually locks. As a matter of fact, with the `SecureStorage` type of vault, the vault also will not automatically lock while the application is in the background.
+In that latter case, you didn't have to do anything to unlock the vault. That is because we are not using a type of vault that actually locks. As a matter of fact, with the `VaultType.SecureStorage` type of vault, the vault also will not automatically lock while the application is in the background.
 
 In a couple of sections, we will explore on expanding this further by using different vault types. First, though, we will begin exploring the `Device` API.
 
-## The `Device` API
+## The Device API
 
 Identity Vault allows you to have multiple vaults within your application. However, there are some capabilities that Identity Vault allows you to control that are applicable to the device that the application is running on rather than being applicable to any given vault. For these items, we will use Identity Vault's `Device` API.
 
@@ -393,7 +393,7 @@ Build the app and play around with changing the check box and putting the app in
 
 ## Using Different Vault Types
 
-The mechanism used to unlock the vault is determined by a combination of the `type` and the `deviceSecurityType` configuration settings. The type can be any of the following:
+The mechanism used to unlock the vault is determined by a combination of the `type` and the `DeviceSecurityType` configuration settings. The type can be any of the following:
 
 - `SecureStorage`: Securely store the data in the keychain, but do not lock it.
 - `DeviceSecurity`: When the vault is locked, it needs to be unlocked via a mechanism provided by the device.
@@ -411,8 +411,8 @@ We specified `SecureStorage` when we set up the vault and this type will be used
 ```TypeScript
     this.vault = new Vault({
       key: 'io.ionic.getstartedivangular',
-      type: 'SecureStorage',
-      deviceSecurityType: 'SystemPasscode',
+      type: VaultType.SecureStorage,
+      deviceSecurityType: DeviceSecurityType.SystemPasscode,
       lockAfterBackgrounded: 2000,
       shouldClearVaultAfterTooManyFailedAttempts: true,
       customPasscodeInvalidUnlockAttempts: 2,
