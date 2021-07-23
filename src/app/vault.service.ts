@@ -32,8 +32,8 @@ export class VaultService {
   async init() {
     this.vault = new Vault({
       key: 'io.ionic.getstartedivangular',
-      type: 'SecureStorage',
-      deviceSecurityType: 'SystemPasscode',
+      type: VaultType.SecureStorage,
+      deviceSecurityType: DeviceSecurityType.SystemPasscode,
       lockAfterBackgrounded: 2000,
       shouldClearVaultAfterTooManyFailedAttempts: true,
       customPasscodeInvalidUnlockAttempts: 2,
@@ -92,18 +92,18 @@ export class VaultService {
 
     switch (this.state.lockType) {
       case 'Biometrics':
-        type = 'DeviceSecurity';
-        deviceSecurityType = 'Biometrics';
+        type = VaultType.DeviceSecurity;
+        deviceSecurityType = DeviceSecurityType.Biometrics;
         break;
 
       case 'SystemPasscode':
-        type = 'DeviceSecurity';
-        deviceSecurityType = 'SystemPasscode';
+        type = VaultType.DeviceSecurity;
+        deviceSecurityType = DeviceSecurityType.SystemPasscode;
         break;
 
       default:
-        type = 'SecureStorage';
-        deviceSecurityType = 'SystemPasscode';
+        type = VaultType.SecureStorage;
+        deviceSecurityType = DeviceSecurityType.SystemPasscode;
     }
     this.vault.updateConfig({ ...this.vault.config, type, deviceSecurityType });
   }
