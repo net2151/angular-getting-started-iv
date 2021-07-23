@@ -395,16 +395,16 @@ Build the app and play around with changing the check box and putting the app in
 
 The mechanism used to unlock the vault is determined by a combination of the `type` and the `DeviceSecurityType` configuration settings. The type can be any of the following:
 
-- `VaultType.SecureStorage`: Securely store the data in the keychain, but do not lock it.
-- `VaultType.DeviceSecurit`: When the vault is locked, it needs to be unlocked via a mechanism provided by the device.
-- `VaultType.CustomPasscode`: When the vault is locked, it needs to be unlocked via a custom method provided by the application. This is typically done in the form of a custom PIN dialog.
-- `VaultType.InMemory`: The data is never persisted. As a result, if the application is locked or restarted, the data is gone.
+- `SecureStorage`: Securely store the data in the keychain, but do not lock it.
+- `DeviceSecurity`: When the vault is locked, it needs to be unlocked via a mechanism provided by the device.
+- `CustomPasscode`: When the vault is locked, it needs to be unlocked via a custom method provided by the application. This is typically done in the form of a custom PIN dialog.
+- `InMemory`: The data is never persisted. As a result, if the application is locked or restarted, the data is gone.
 
 In addition to these types, if `DeviceSecurity` is used, it is further refined by the `deviceSecurityType`, which can be any of the following values:
 
-- `DeviceSecurityType.Biometrics`: Use the biometric authentication type specified by the device.
-- `DeviceSecurityType.SystemPasscode`: Use the system passcode entry screen.
-- `DeviceSecurityType.Both`: Use `Biometrics` with the `SystemPasscode` as a backup when `Biometrics` fails.
+- `Biometrics`: Use the biometric authentication type specified by the device.
+- `SystemPasscode`: Use the system passcode entry screen.
+- `Both`: Use `Biometrics` with the `SystemPasscode` as a backup when `Biometrics` fails.
 
 We specified `SecureStorage` when we set up the vault and this type will be used if the vault does not exist:
 
