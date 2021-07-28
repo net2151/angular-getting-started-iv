@@ -8,6 +8,7 @@ export interface VaultServiceState {
   privacyScreen: boolean;
   lockType: 'NoLocking' | 'Biometrics' | 'SystemPasscode';
   canUseBiometrics: boolean;
+  canUsePasscode: boolean;
   vaultExists: boolean;
 }
 
@@ -21,6 +22,7 @@ export class VaultService {
     privacyScreen: false,
     lockType: 'NoLocking',
     canUseBiometrics: false,
+    canUsePasscode: false,
     vaultExists: false
   };  
 
@@ -58,6 +60,7 @@ export class VaultService {
 
     this.state.privacyScreen = await Device.isHideScreenOnBackgroundEnabled();
     this.state.canUseBiometrics = await Device.isBiometricsEnabled();
+    this.state.canUsePasscode = await Device.isSystemPasscodeSet();
     await this.checkVaultExists();
   }
 

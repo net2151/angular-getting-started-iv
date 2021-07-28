@@ -523,7 +523,7 @@ We can now add a group of radio buttons to our `Home` page component:
     
         <ion-item>
           <ion-label>Use System Passcode</ion-label>
-          <ion-radio value="SystemPasscode"></ion-radio>
+          <ion-radio [disabled]="!state.canUsePasscode" value="SystemPasscode"></ion-radio>
         </ion-item>
       </ion-radio-group>
     </ion-item>
@@ -536,11 +536,12 @@ With the additional method setLockType in the code for `Home` page component:
   }
 ```
 
-Notice for the "Use Biometric" radio button, we are disabling it based on a `canUseBiometrics` value. We will need to code for that.
+Notice for the "Use Biometric" and "Use System Passcode" radio buttons, we are disabling it based on the `canUseBiometrics` and `canUsePasscode` values. We will need to code for that.
 
 Add a property to the `VaultServiceState` interface:
 ```TypeScript
   canUseBiometrics: boolean;
+  canUsePasscode: boolean;
 }
 ```
 
@@ -548,6 +549,7 @@ Initialize `canUseBiometrics` in the `init` method of `VaultService`:
 
 ```TypeScript
     this.state.canUseBiometrics = await Device.isBiometricsEnabled();
+    this.state.canUsePasscode = await Device.isSystemPasscodeSet();
 ```
 
 Notice that we are using the `Device` API again here to determine if biometrics are both supported by the current device as well as enabled by the user. We don't want users to be able to choose that option unless the biometrics are properly set up on the device.
