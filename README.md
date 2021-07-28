@@ -1,13 +1,17 @@
 # Getting Started with Identity Vault in @ionic/angular
 
-This application walks through the basic setup and use of Ionic's Identity Vault in an `@ionic/angular` application. Rather than connecting to a back end service and storing the session data this application will just store information that you type in and tell it to store. Almost all of the work done here will be concentrated on a couple of files:
+In this tutorial we will walk through the basic setup and use of <a href="https://ionic.io/products/identity-vault" target="_blank">Ionic's Identity Vault</a> in an `@ionic/angular` application. 
+
+The most common use case of Identity Vault is to connect to a back end service and store user session data. For the purpose of this tutorial, the application we build will not connect to an actual service. Instead, the application will simply store information that you type in and tell it to store.
+
+ Almost all of the work done here will be concentrated on a couple of files:
 
 - `src/app/vault.service.ts`: a service that abstracts the logic associated with using Identity Vault. This methods and properties here model what might be done in a real application.
 - `src/app/home/home.page.ts`: the main view will have several form controls that allow the user to manipulate the vault. An application would not typically do this. Rather, it would call the methods from `vault-service.ts` within various workflows. In this "getting started" demo application, however, this allows us to easily play around with the various APIs to see how they behave.
 
 ## Generate the Application
 
-The first thing we need to do is generate our application.
+The first step to take is to generate our application:
 
 ```bash
 ionic start getting-started-iv-angular blank --type=angular --capacitor
@@ -49,7 +53,11 @@ Finally, in order to ensure that a `cap copy` happens with each build, add it to
 
 ## Install Identity Vault
 
-In order to install Identity Vault, you will need to use `ionic enterprise register` in order to register your product key. This will create a `.npmrc` file containing the product key. If you have already performed that step for your production application, you can just copy the `.npmrc` file from your production project. Since this application is just for learning purposes, you don't need to obtain another key. You can then install Identity Vault.
+In order to install Identity Vault you will need to use `ionic enterprise register` in order to register your product key. This will create a `.npmrc` file containing the product key.
+
+If you have already performed that step for your production application, you can just copy the `.npmrc` file from your production project. Since this application is for learning purposes only, you don't need to obtain another key.
+
+You can then install Identity Vault:
 
 ```bash
 npm install @ionic-enterprise/identity-vault
@@ -57,7 +65,7 @@ npm install @ionic-enterprise/identity-vault
 
 ## Create the Vault
 
-In this step, we will create the vault and test it by storing an retrieving a value from it. We will call this value the `session` since storing session data in a vault is the most common use case. However, it is certainly not the _only_ use case.
+In this step, we will create the vault and test it by storing an retrieving a value from it. This value will be called `session`, since storing session data in a vault is the most common use case of Identity Vault. However, it is certainly not the _only_ use case.
 
 First, create a service named vault.
 
@@ -69,7 +77,8 @@ This will create a file named `src/app/vault.service.ts`. Within this file, we w
 
 ```TypeScript
 import { Injectable } from '@angular/core';
-import { Vault } from '@ionic-enterprise/identity-vault';
+import { Capacitor } from '@capacitor/core';
+import { Vault, BrowserVault } from '@ionic-enterprise/identity-vault';
 
 export interface VaultServiceState {
   session: string;  
@@ -85,14 +94,14 @@ export class VaultService {
 
   key = 'sessionData';
 
-  vault: Vault;
+  vault: Vault | BrowserVault;
 
   constructor() {
     this.init();
   }
 
   async init() {
-    this.vault = new Vault({
+    const config = {
       key: 'io.ionic.getstartedivangular',
       type: VaultType.SecureStorage,
       deviceSecurityType: DeviceSecurityType.SystemPasscode,
@@ -100,7 +109,10 @@ export class VaultService {
       shouldClearVaultAfterTooManyFailedAttempts: true,
       customPasscodeInvalidUnlockAttempts: 2,
       unlockVaultOnLoad: false,
-    });
+    };
+
+    this.vault = Capacitor.getPlatform() === 'web' ? new BrowserVault(config) : new Vault(config);    
+
 
   async setSession(value: string): Promise<void> {
     this.state.session = value;
@@ -121,14 +133,14 @@ Let's look at this file section by section. The first thing we do is define our 
     session: ''    
   };
 
-  vault: Vault;
+  vault: Vault | BrowserVault;
 
   constructor() {
     this.init();
   }
 
   async init() {
-    this.vault = new Vault({
+    const config = {
       key: 'io.ionic.getstartedivangular',
       type: VaultType.SecureStorage,
       deviceSecurityType: DeviceSecurityType.SystemPasscode,
@@ -136,10 +148,16 @@ Let's look at this file section by section. The first thing we do is define our 
       shouldClearVaultAfterTooManyFailedAttempts: true,
       customPasscodeInvalidUnlockAttempts: 2,
       unlockVaultOnLoad: false,
-    });
+    };
+
+    this.vault = Capacitor.getPlatform() === 'web' ? new BrowserVault(config) : new Vault(config);
 ```
 
-**Note:** Constructors cannot contain the `await` keyword. To get around this we asynchronously calling the `init` method. At the moment this method does not have asynchronous methods but it soon will.
+:::note
+Constructors cannot contain the `await` keyword. To get around this we asynchronously calling the `init` method. At the moment this method does not have asynchronous methods but it soon will.
+:::
+
+Note that we are using the `BrowserVault` class when the application is running on the web. The `BrowserVault` allows us to continue to use our normal web-based development workflow.
 
 All data within the vault is stored as a key-value pair, and you can store multiple key-value pairs within a single vault. We define methods for `setSession` and `restoreSession` that set and get data for a key named `sessionData`.
 
@@ -156,7 +174,9 @@ All data within the vault is stored as a key-value pair, and you can store multi
   }
 ```
 
-**Note:** rather than create define functions such as `setSession()` and `restoreSession()`, we _could_ expose the `vault` from service and use its API directly in the rest of the application. However, that would expose the rest of the application to potential API changes as well as potentially result in duplicated code. In my opinion, it is a much better option to encapsulate an interface for Identity Vault to the rest of the application. This makes the code more maintainable and easier to debug.
+:::note
+Rather than create define functions such as `setSession()` and `restoreSession()`, we _could_ expose the `vault` from service and use its API directly in the rest of the application. However, that would expose the rest of the application to potential API changes as well as potentially result in duplicated code. In my opinion, it is a much better option to encapsulate an interface for Identity Vault to the rest of the application. This makes the code more maintainable and easier to debug.
+:::
 
 Now that we have the vault in place, let's switch over to `HomePage` component and implement some simple interactions with the vault. Here is a snapshot of what we will change:
 
@@ -284,7 +304,9 @@ and in `home.page.ts`:
 
 We can now lock and unlock the vault, though in our current case we cannot really tell. Our application should react in some way when the vault is locked. For example, we may want to clear specific data from memory. We may also wish to redirect to a page that will only allow the user to proceed if they unlock the vault. In our case, we will just clear the `session` and have a flag that we can use to visually indicate if the vault is locked or not. We can do that by using the vault's `onLock` event.
 
-**Note:** The events of Identity Vault are not aware of the change detection system of Angular. We use the `ngZone` `run` method to ensure our user interface updates on changes. 
+:::note
+The events of Identity Vault are not aware of the change detection system of Angular. We use the `ngZone` `run` method to ensure our user interface updates on changes. 
+:::
 
 Add the following code to `src/vault.service.ts`:
 
@@ -335,13 +357,13 @@ In that latter case, you didn't have to do anything to unlock the vault. That is
 
 In a couple of sections, we will explore on expanding this further by using different vault types. First, though, we will begin exploring the `Device` API.
 
-## The Device API
+## Device Level Capabilities
 
 Identity Vault allows you to have multiple vaults within your application. However, there are some capabilities that Identity Vault allows you to control that are applicable to the device that the application is running on rather than being applicable to any given vault. For these items, we will use Identity Vault's `Device` API.
 
 One such item is the "privacy screen." When an application is put into the background, the default behavior is for the OS to take a screenshot of the current page and display that as the user scrolls through the open applications. However, if your application displays sensitive information, you may not want that information displayed at such a time, so another option is to display the splash screen (on iOS) or a plain rectangle (on Android) instead of the screenshot. This is often referred to as a "privacy screen."
 
-We will use the `Device.isHideScreenOnBackgroundEnabled()` method to determine if our application will currently display the privacy screen or not. We will then use the `Device.setHideScreenOnBackground()` method to control whether it is displayed or not. Finally, we will hook that all up to a checkbox in the UI to allow the user to manipulate the value at run time.
+We will use the `Device.isHideScreenOnBackgroundEnabled()` method to determine if our application will currently display the privacy screen or not. Then we will use the `Device.setHideScreenOnBackground()` method to control whether it is displayed or not. Finally, we will hook that all up to a checkbox in the UI to allow the user to manipulate the value at run time.
 
 All of the following code applies to the `src/app/vault.service.ts` file.
 
@@ -393,14 +415,16 @@ Build the app and play around with changing the check box and putting the app in
 
 ## Using Different Vault Types
 
-The mechanism used to unlock the vault is determined by a combination of the `type` and the `DeviceSecurityType` configuration settings. The type can be any of the following:
+The mechanism used to unlock a vault is determined by a combination of the `type` and the `deviceSecurityType` configuration settings.
+
+The `type` setting can be set to any value from the `VaultType` enumeration:
 
 - `SecureStorage`: Securely store the data in the keychain, but do not lock it.
 - `DeviceSecurity`: When the vault is locked, it needs to be unlocked via a mechanism provided by the device.
 - `CustomPasscode`: When the vault is locked, it needs to be unlocked via a custom method provided by the application. This is typically done in the form of a custom PIN dialog.
 - `InMemory`: The data is never persisted. As a result, if the application is locked or restarted, the data is gone.
 
-In addition to these types, if `DeviceSecurity` is used, it is further refined by the `deviceSecurityType`, which can be any of the following values:
+If `VaultType.DeviceSecurity` is used, the optional `deviceSecurityType` setting can further refine the vault by assigning a value from the `DeviceSecurity` enumeration:
 
 - `Biometrics`: Use the biometric authentication type specified by the device.
 - `SystemPasscode`: Use the system passcode entry screen.
@@ -594,6 +618,6 @@ Then in `home.page.ts`:
 
 ## Conclusion
 
-This walk-through has implemented using Identity Vault in a very manual manner, allowing for a lot of user interaction with the vault. In an real application, functionality would instead be a part of several programmatic workflows.
+This "getting started" tutorial has implemented using Identity Vault in a very manual manner, allowing for a lot of user interaction with the vault. In an actual application, a lot of this functionality would instead be a part of several programmatic workflows within the application.
 
-At this point, you should have a good idea of how Identity Vault works. There is still more functionality that can be implemented. Be sure to check out our HowTo documents to determine how to facilitate specific areas of functionality within your application.
+At this point, you should have a good idea of how Identity Vault works. There is still more functionality that can be implemented. Be sure to check out our documentation to determine how to facilitate specific areas of functionality within your application.

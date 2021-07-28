@@ -1,5 +1,6 @@
 import { Injectable, NgZone } from '@angular/core';
-import { Vault, Device, DeviceSecurityType, VaultType } from '@ionic-enterprise/identity-vault';
+import { Capacitor } from '@capacitor/core';
+import { Vault, Device, DeviceSecurityType, VaultType, BrowserVault } from '@ionic-enterprise/identity-vault';
 
 export interface VaultServiceState {
   session: string;
@@ -23,14 +24,14 @@ export class VaultService {
     vaultExists: false
   };  
 
-  vault: Vault;
+  vault: Vault | BrowserVault;
 
   constructor(private ngZone: NgZone) {
     this.init();
   }
 
   async init() {
-    this.vault = new Vault({
+    const config = {
       key: 'io.ionic.getstartedivangular',
       type: VaultType.SecureStorage,
       deviceSecurityType: DeviceSecurityType.SystemPasscode,
@@ -38,7 +39,9 @@ export class VaultService {
       shouldClearVaultAfterTooManyFailedAttempts: true,
       customPasscodeInvalidUnlockAttempts: 2,
       unlockVaultOnLoad: false,
-    });
+    };
+
+    this.vault = Capacitor.getPlatform() === 'web' ? new BrowserVault(config) : new Vault(config);    
 
     this.vault.onLock(() => {
       this.ngZone.run(() => {
