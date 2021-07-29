@@ -1,5 +1,6 @@
 import { Injectable, NgZone } from '@angular/core';
-import { Vault, Device, DeviceSecurityType, VaultType } from '@ionic-enterprise/identity-vault';
+import { Capacitor } from '@capacitor/core';
+import { Vault, Device, DeviceSecurityType, VaultType, BrowserVault } from '@ionic-enterprise/identity-vault';
 
 export interface VaultServiceState {
   session: string;
@@ -7,6 +8,7 @@ export interface VaultServiceState {
   privacyScreen: boolean;
   lockType: 'NoLocking' | 'Biometrics' | 'SystemPasscode';
   canUseBiometrics: boolean;
+  canUsePasscode: boolean;
   vaultExists: boolean;
 }
 
@@ -20,17 +22,18 @@ export class VaultService {
     privacyScreen: false,
     lockType: 'NoLocking',
     canUseBiometrics: false,
+    canUsePasscode: false,
     vaultExists: false
   };  
 
-  vault: Vault;
+  vault: Vault | BrowserVault;
 
   constructor(private ngZone: NgZone) {
     this.init();
   }
 
   async init() {
-    this.vault = new Vault({
+    const config = {
       key: 'io.ionic.getstartedivangular',
       type: VaultType.SecureStorage,
       deviceSecurityType: DeviceSecurityType.SystemPasscode,
@@ -38,7 +41,9 @@ export class VaultService {
       shouldClearVaultAfterTooManyFailedAttempts: true,
       customPasscodeInvalidUnlockAttempts: 2,
       unlockVaultOnLoad: false,
-    });
+    };
+
+    this.vault = Capacitor.getPlatform() === 'web' ? new BrowserVault(config) : new Vault(config);    
 
     this.vault.onLock(() => {
       this.ngZone.run(() => {
@@ -55,6 +60,7 @@ export class VaultService {
 
     this.state.privacyScreen = await Device.isHideScreenOnBackgroundEnabled();
     this.state.canUseBiometrics = await Device.isBiometricsEnabled();
+    this.state.canUsePasscode = await Device.isSystemPasscodeSet();
     await this.checkVaultExists();
   }
 
