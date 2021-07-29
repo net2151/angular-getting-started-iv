@@ -1,30 +1,46 @@
-import { Injectable, NgZone } from '@angular/core';
-import { Capacitor } from '@capacitor/core';
-import { Vault, Device, DeviceSecurityType, VaultType, BrowserVault } from '@ionic-enterprise/identity-vault';
+import { Injectable, NgZone } from "@angular/core";
+import { Capacitor } from "@capacitor/core";
+import {
+  Vault,
+  Device,
+  DeviceSecurityType,
+  VaultType,
+  BrowserVault,
+  IdentityVaultConfig,
+} from "@ionic-enterprise/identity-vault";
+
+const config: IdentityVaultConfig = {
+  key: "io.ionic.getstartedivangular",
+  type: VaultType.SecureStorage,
+  deviceSecurityType: DeviceSecurityType.None,
+  lockAfterBackgrounded: 2000,
+  shouldClearVaultAfterTooManyFailedAttempts: true,
+  customPasscodeInvalidUnlockAttempts: 2,
+  unlockVaultOnLoad: false,
+};
+const key = "sessionData";
 
 export interface VaultServiceState {
   session: string;
   isLocked: boolean;
   privacyScreen: boolean;
-  lockType: 'NoLocking' | 'Biometrics' | 'SystemPasscode';
+  lockType: "NoLocking" | "Biometrics" | "SystemPasscode";
   canUseBiometrics: boolean;
   canUsePasscode: boolean;
   vaultExists: boolean;
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: "root" })
 export class VaultService {
   public state: VaultServiceState = {
-    session: '',
+    session: "",
     isLocked: false,
     privacyScreen: false,
-    lockType: 'NoLocking',
+    lockType: "NoLocking",
     canUseBiometrics: false,
     canUsePasscode: false,
-    vaultExists: false
-  };  
+    vaultExists: false,
+  };
 
   vault: Vault | BrowserVault;
 
@@ -33,17 +49,10 @@ export class VaultService {
   }
 
   async init() {
-    const config = {
-      key: 'io.ionic.getstartedivangular',
-      type: VaultType.SecureStorage,
-      deviceSecurityType: DeviceSecurityType.SystemPasscode,
-      lockAfterBackgrounded: 2000,
-      shouldClearVaultAfterTooManyFailedAttempts: true,
-      customPasscodeInvalidUnlockAttempts: 2,
-      unlockVaultOnLoad: false,
-    };
-
-    this.vault = Capacitor.getPlatform() === 'web' ? new BrowserVault(config) : new Vault(config);    
+    this.vault =
+      Capacitor.getPlatform() === "web"
+        ? new BrowserVault(config)
+        : new Vault(config);
 
     this.vault.onLock(() => {
       this.ngZone.run(() => {
@@ -58,24 +67,31 @@ export class VaultService {
       });
     });
 
-    this.state.privacyScreen = await Device.isHideScreenOnBackgroundEnabled();
-    this.state.canUseBiometrics = await Device.isBiometricsEnabled();
-    this.state.canUsePasscode = await Device.isSystemPasscodeSet();
-    await this.checkVaultExists();
-  }
+    this.state.isLocked = await this.vault.isLocked();
 
-  async checkVaultExists(): Promise<void> {
+    this.state.privacyScreen =
+      Capacitor.getPlatform() === "web"
+        ? false
+        : await Device.isHideScreenOnBackgroundEnabled();
+    this.state.canUseBiometrics =
+      Capacitor.getPlatform() === "web"
+        ? false
+        : await Device.isBiometricsEnabled();
+    this.state.canUsePasscode =
+      Capacitor.getPlatform() === "web"
+        ? false
+        : await Device.isSystemPasscodeSet();
     this.state.vaultExists = await this.vault.doesVaultExist();
   }
 
   async setSession(value: string): Promise<void> {
     this.state.session = value;
-    await this.vault.setValue('sessionData', value);
-    await this.checkVaultExists();
+    await this.vault.setValue(key, value);
+    this.state.vaultExists = await this.vault.doesVaultExist();
   }
 
   async restoreSession() {
-    const value = await this.vault.getValue('sessionData');
+    const value = await this.vault.getValue(key);
     this.state.session = value;
   }
 
@@ -97,27 +113,27 @@ export class VaultService {
     let deviceSecurityType: DeviceSecurityType;
 
     switch (this.state.lockType) {
-      case 'Biometrics':
+      case "Biometrics":
         type = VaultType.DeviceSecurity;
         deviceSecurityType = DeviceSecurityType.Biometrics;
         break;
 
-      case 'SystemPasscode':
+      case "SystemPasscode":
         type = VaultType.DeviceSecurity;
         deviceSecurityType = DeviceSecurityType.SystemPasscode;
         break;
 
       default:
         type = VaultType.SecureStorage;
-        deviceSecurityType = DeviceSecurityType.SystemPasscode;
+        deviceSecurityType = DeviceSecurityType.None;
     }
     this.vault.updateConfig({ ...this.vault.config, type, deviceSecurityType });
   }
 
   async clearVault() {
     await this.vault.clear();
-    this.state.lockType = 'NoLocking';
+    this.state.lockType = "NoLocking";
     this.state.session = undefined;
-    await this.checkVaultExists();
+    this.state.vaultExists = await this.vault.doesVaultExist();
   }
 }
