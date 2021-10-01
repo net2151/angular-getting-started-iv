@@ -62,10 +62,15 @@ In order to install Identity Vault you will need to use `ionic enterprise regist
 
 If you have already performed that step for your production application, you can just copy the `.npmrc` file from your production project. Since this application is for learning purposes only, you don't need to obtain another key.
 
-You can now install Identity Vault:
+You can now install Identity Vault. If you are using Cordova then run:
+```bash
+ionic cordova plugin add @ionic-enterprise/identity-vault 
+```
 
+If you are using Capacitor then:
 ```bash
 npm install @ionic-enterprise/identity-vault
+npx cap sync
 ```
 
 ## Create the Vault
@@ -91,6 +96,7 @@ import {
   BrowserVault,
   IdentityVaultConfig,
 } from "@ionic-enterprise/identity-vault";
+import { Platform } from "@ionic/angular";
 
 const config: IdentityVaultConfig = {
   key: "io.ionic.getstartedivangular",
@@ -115,11 +121,12 @@ export class VaultService {
 
   vault: Vault | BrowserVault;
 
-  constructor() {
+  constructor(private platform: Platform) {
     this.init();
   }
 
   async init() {
+    await this.platform.ready(); // This is required only for Cordova
     this.vault =
       Capacitor.getPlatform() === "web"
         ? new BrowserVault(config)
@@ -139,7 +146,7 @@ export class VaultService {
 ```
 
 :::note
-Constructors cannot contain the `await` keyword. To get around this we asynchronously calling the `init` method. At the moment this method does not have asynchronous methods but it soon will.
+Constructors cannot contain the `await` keyword. To get around this we are asynchronously calling the `init` method. At the moment this method does not have asynchronous methods but it soon will.
 :::
 
 Let's look at this file section by section:
@@ -175,11 +182,12 @@ export class VaultService {
 
   vault: Vault | BrowserVault;
 
-  constructor() {
+  constructor(private platform: Platform) {
     this.init();
   }
 
   async init() {
+    await this.platform.ready(); // This is required only for Cordova
     this.vault =
       Capacitor.getPlatform() === "web"
         ? new BrowserVault(config)
@@ -357,11 +365,12 @@ export class VaultService {
     isLocked: false
   };
   ...
-  constructor(private ngZone: NgZone) {
+  constructor(private ngZone: NgZone, private platform: Platform) {
     this.init();
   }
 
   async init() {
+    await this.platform.ready(); // This is required only for Cordova
     this.vault =
       Capacitor.getPlatform() === "web"
         ? new BrowserVault(config)
