@@ -8,6 +8,7 @@ import {
   BrowserVault,
   IdentityVaultConfig,
 } from "@ionic-enterprise/identity-vault";
+import { Platform } from "@ionic/angular";
 
 const config: IdentityVaultConfig = {
   key: "io.ionic.getstartedivangular",
@@ -44,11 +45,12 @@ export class VaultService {
 
   vault: Vault | BrowserVault;
 
-  constructor(private ngZone: NgZone) {
+  constructor(private ngZone: NgZone, private platform: Platform) {
     this.init();
   }
 
   async init() {
+    await this.platform.ready(); // This is required only for Cordova
     this.vault =
       Capacitor.getPlatform() === "web"
         ? new BrowserVault(config)
