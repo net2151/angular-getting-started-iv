@@ -27,12 +27,12 @@ Now that the application has been generated let's add the iOS and Android platfo
 Open the `capacitor.config.ts` file and change the `appId` to something unique like `io.ionic.gettingstartedivangular`:
 
 ```typescript
-import { CapacitorConfig } from "@capacitor/cli";
+import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: "io.ionic.gettingstartedivangular",
-  appName: "getting-started-iv-angular",
-  webDir: "www",
+  appId: 'io.ionic.gettingstartedivangular',
+  appName: 'getting-started-iv-angular',
+  webDir: 'www',
   bundledWebRuntime: false,
 };
 
@@ -63,11 +63,13 @@ In order to install Identity Vault you will need to use `ionic enterprise regist
 If you have already performed that step for your production application, you can just copy the `.npmrc` file from your production project. Since this application is for learning purposes only, you don't need to obtain another key.
 
 You can now install Identity Vault. If you are using Cordova then run:
+
 ```bash
-ionic cordova plugin add @ionic-enterprise/identity-vault 
+ionic cordova plugin add @ionic-enterprise/identity-vault
 ```
 
 If you are using Capacitor then:
+
 ```bash
 npm install @ionic-enterprise/identity-vault
 npx cap sync
@@ -86,8 +88,8 @@ ionic generate service vault
 Within this file we will create an Angular service that defines the vault and methods that abstract all of the logic we need in order to interact with the vault:
 
 ```typescript
-import { Injectable } from "@angular/core";
-import { Capacitor } from "@capacitor/core";
+import { Injectable } from '@angular/core';
+import { Capacitor } from '@capacitor/core';
 import {
   Vault,
   Device,
@@ -95,11 +97,11 @@ import {
   VaultType,
   BrowserVault,
   IdentityVaultConfig,
-} from "@ionic-enterprise/identity-vault";
-import { Platform } from "@ionic/angular";
+} from '@ionic-enterprise/identity-vault';
+import { Platform } from '@ionic/angular';
 
 const config: IdentityVaultConfig = {
-  key: "io.ionic.getstartedivangular",
+  key: 'io.ionic.getstartedivangular',
   type: VaultType.SecureStorage,
   deviceSecurityType: DeviceSecurityType.None,
   lockAfterBackgrounded: 2000,
@@ -107,30 +109,26 @@ const config: IdentityVaultConfig = {
   customPasscodeInvalidUnlockAttempts: 2,
   unlockVaultOnLoad: false,
 };
-const key = "sessionData";
+const key = 'sessionData';
 
 export interface VaultServiceState {
   session: string;
 }
 
-@Injectable({ providedIn: "root" })
+@Injectable({ providedIn: 'root' })
 export class VaultService {
   public state: VaultServiceState = {
-    session: "",
+    session: '',
   };
 
   vault: Vault | BrowserVault;
 
   constructor(private platform: Platform) {
-    this.init();
+    this.vault = Capacitor.getPlatform() === 'web' ? new BrowserVault(config) : new Vault(config);
   }
 
   async init() {
     await this.platform.ready(); // This is required only for Cordova
-    this.vault =
-      Capacitor.getPlatform() === "web"
-        ? new BrowserVault(config)
-        : new Vault(config);
   }
 
   async setSession(value: string): Promise<void> {
@@ -146,7 +144,7 @@ export class VaultService {
 ```
 
 :::note
-Constructors cannot contain the `await` keyword. To get around this we are asynchronously calling the `init` method. At the moment this method does not have asynchronous methods but it soon will.
+Constructors must be synchronous and should only contain construction related code. As such, we also have an `init()` method that will be used to initialize the vault. This ensures that our vault is contructed properly and is ready for injection, while also allowing for asynchronous initialization.
 :::
 
 Let's look at this file section by section:
@@ -155,7 +153,7 @@ The first thing we do is define a configuration for our vault. The `key` gives t
 
 ```typescript
 const config: IdentityVaultConfig = {
-  key: "io.ionic.getstartedivangular",
+  key: 'io.ionic.getstartedivangular',
   type: VaultType.SecureStorage,
   deviceSecurityType: DeviceSecurityType.None,
   lockAfterBackgrounded: 2000,
@@ -168,30 +166,26 @@ const config: IdentityVaultConfig = {
 Next, we define a key for storing data. All data within the vault is stored as a key-value pair and you can store multiple key-value pairs within a single vault.
 
 ```typescript
-const key = "sessionData";
+const key = 'sessionData';
 ```
 
 Then, we create an Angular service that creates our vault.
 
 ```typescript
-@Injectable({ providedIn: "root" })
+@Injectable({ providedIn: 'root' })
 export class VaultService {
   public state: VaultServiceState = {
-    session: "",
+    session: '',
   };
 
   vault: Vault | BrowserVault;
 
   constructor(private platform: Platform) {
-    this.init();
+    this.vault = Capacitor.getPlatform() === 'web' ? new BrowserVault(config) : new Vault(config);
   }
 
   async init() {
     await this.platform.ready(); // This is required only for Cordova
-    this.vault =
-      Capacitor.getPlatform() === "web"
-        ? new BrowserVault(config)
-        : new Vault(config);
   }
 
   async setSession(value: string): Promise<void> {
@@ -215,17 +209,48 @@ It's recommended to abstract vault functionality into functions that define how 
 Note that we are using the `BrowserVault` class when the application is running on the web. The `BrowserVault` allows us to continue to use our normal web-based development workflow.
 
 ```typescript
-this.vault =
-  Capacitor.getPlatform() === "web"
-    ? new BrowserVault(config)
-    : new Vault(config);
+this.vault = Capacitor.getPlatform() === 'web' ? new BrowserVault(config) : new Vault(config);
 ```
 
 :::note
 The `BrowserVault` class allows developers to use their normal web-based development workflow. It does **not** provide locking or security functionality.
 :::
 
-Now that we have the vault in place, let's switch over to `src/home/home.page.ts` and implement some simple interactions with the vault. Here is a snapshot of what we will change:
+We still need to initialize the `VaultService`. We will do that in `src/app/app.module.ts` via Angular's `APP_INITIALIZER` depencency injection token:
+
+```typescript
+import { APP_INITIALIZER, NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { RouteReuseStrategy } from '@angular/router';
+import { IonicModule, IonicRouteStrategy } from '@ionic/angular';
+import { AppRoutingModule } from './app-routing.module';
+import { AppComponent } from './app.component';
+import { VaultService } from './vault.service';
+
+const appInitFactory =
+  (vaultService: VaultService): (() => Promise<void>) =>
+  () =>
+    vaultService.init();
+
+@NgModule({
+  declarations: [AppComponent],
+  entryComponents: [],
+  imports: [BrowserModule, IonicModule.forRoot(), AppRoutingModule],
+  providers: [
+    { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
+    {
+      provide: APP_INITIALIZER,
+      useFactory: appInitFactory,
+      deps: [VaultService],
+      multi: true,
+    },
+  ],
+  bootstrap: [AppComponent],
+})
+export class AppModule {}
+```
+
+Now that we have the vault in place and properly initialized, let's switch over to `src/home/home.page.ts` and implement some simple interactions with the vault. Here is a snapshot of what we will change:
 
 Update the template to match the following code:
 
@@ -251,17 +276,13 @@ Update the template to match the following code:
 
     <ion-item>
       <ion-label>
-        <ion-button expand="block" (click)="setSession(state.session)">
-          Set Session Data
-        </ion-button>
+        <ion-button expand="block" (click)="setSession(state.session)"> Set Session Data </ion-button>
       </ion-label>
     </ion-item>
 
     <ion-item>
       <ion-label>
-        <ion-button expand="block" (click)="restoreSession()">
-          Restore Session Data
-        </ion-button>
+        <ion-button expand="block" (click)="restoreSession()"> Restore Session Data </ion-button>
       </ion-label>
     </ion-item>
 
@@ -277,13 +298,13 @@ Update the template to match the following code:
 Update `src/app/home/home.page.ts` to match the following code:
 
 ```typescript
-import { Component } from "@angular/core";
-import { VaultService, VaultServiceState } from "../vault.service";
+import { Component } from '@angular/core';
+import { VaultService, VaultServiceState } from '../vault.service';
 
 @Component({
-  selector: "app-home",
-  templateUrl: "home.page.html",
-  styleUrls: ["home.page.scss"],
+  selector: 'app-home',
+  templateUrl: 'home.page.html',
+  styleUrls: ['home.page.scss'],
 })
 export class HomePage {
   public state: VaultServiceState;
@@ -366,15 +387,11 @@ export class VaultService {
   };
   ...
   constructor(private ngZone: NgZone, private platform: Platform) {
-    this.init();
+    this.vault = Capacitor.getPlatform() === "web" ? new BrowserVault(config) : new Vault(config);
   }
 
   async init() {
     await this.platform.ready(); // This is required only for Cordova
-    this.vault =
-      Capacitor.getPlatform() === "web"
-        ? new BrowserVault(config)
-        : new Vault(config);
 
     this.vault.onLock(() => {
       this.ngZone.run(() => {
@@ -432,7 +449,7 @@ All of the following code applies to the `src/app/vault.service.ts` file.
 First, import the `Device` API:
 
 ```typescript
-import { Device } from "@ionic-enterprise/identity-vault";
+import { Device } from '@ionic-enterprise/identity-vault';
 ```
 
 Next, add a property to track if the privacy screen is enabled:
@@ -479,10 +496,7 @@ Finally, we can add the checkbox to the `HomePage` component:
 ```html
 <ion-item>
   <ion-label>Use Privacy Screen</ion-label>
-  <ion-checkbox
-    [(ngModel)]="state.privacyScreen"
-    (ionChange)="setPrivacyScreen()"
-  ></ion-checkbox>
+  <ion-checkbox [(ngModel)]="state.privacyScreen" (ionChange)="setPrivacyScreen()"></ion-checkbox>
 </ion-item>
 ```
 
@@ -515,7 +529,7 @@ We specified `SecureStorage` when we set up the vault:
 
 ```typescript
 const config: IdentityVaultConfig = {
-  key: "io.ionic.getstartedivangular",
+  key: 'io.ionic.getstartedivangular',
   type: VaultType.SecureStorage,
   deviceSecurityType: DeviceSecurityType.None,
   lockAfterBackgrounded: 2000,
@@ -555,7 +569,7 @@ public state: VaultServiceState = {
 Then, define a method to allow users to change `lockType` and update the vault configuration accordingly:
 
 ```typescript
-setLockType() {
+async setLockType() {
   let type: VaultType;
   let deviceSecurityType: DeviceSecurityType;
 
@@ -574,7 +588,7 @@ setLockType() {
       type = 'SecureStorage';
       deviceSecurityType = 'SystemPasscode';
   }
-  this.vault.updateConfig({ ...this.vault.config, type, deviceSecurityType });
+  await this.vault.updateConfig({ ...this.vault.config, type, deviceSecurityType });
 }
 ```
 
@@ -594,18 +608,12 @@ Finally, add a group of radio buttons to the `HomePage` component that control t
 
     <ion-item>
       <ion-label>Use Biometrics</ion-label>
-      <ion-radio
-        [disabled]="!state.canUseBiometrics"
-        value="Biometrics"
-      ></ion-radio>
+      <ion-radio [disabled]="!state.canUseBiometrics" value="Biometrics"></ion-radio>
     </ion-item>
 
     <ion-item>
       <ion-label>Use System Passcode</ion-label>
-      <ion-radio
-        [disabled]="!state.canUsePasscode"
-        value="SystemPasscode"
-      ></ion-radio>
+      <ion-radio [disabled]="!state.canUsePasscode" value="SystemPasscode"></ion-radio>
     </ion-item>
   </ion-radio-group>
 </ion-item>
@@ -682,12 +690,12 @@ Now when the application is restarted, the vault should be shown as locked.
 
 In this final step, we will remove all items from the vault and then remove the vault itself. This can be achieved through the `Vault` API by calling the `clear()` method.
 
-To show this in action, add a `vaultExists` property to the `VaultServiceState` in `src/vault.service.ts`:
+To show this in action, add a `isEmpty` property to the `VaultServiceState` in `src/vault.service.ts`:
 
 ```typescript
 export interface VaultServiceState {
   ...
-  vaultExists: boolean;
+  isEmpty: boolean;
 }
 ```
 
@@ -698,14 +706,14 @@ async clearVault() {
   await this.vault.clear();
   this.state.lockType = "NoLocking";
   this.state.session = undefined;
-  await this.checkVaultExists();
+  this.state.isEmpty = await this.vault.isEmpty();
 }
 ```
 
 In order to see when a vault does or does not exist, let's add the following code to `clearVault()` and `setSession()`:
 
 ```typescript
-this.state.vaultExists = await this.vault.doesVaultExist();
+this.state.isEmpty = await this.vault.isEmpty();
 ```
 
 We should also add a call within the `init()` method to initialize the value along with the vault. Go ahead and do so.
@@ -714,7 +722,7 @@ Once that all is in place, make the following adjustments to the `HomePage` comp
 
 - Create a method that calls `VaultService.clearVault()`.
 - Add a button to clear the vault by calling the method created above on click.
-- Display the current value of `vaultExists` in a `div` the same way `session` and `vaultIsLocked` are being shown.
+- Display the current value of `isEmpty` in a `div` the same way `session` and `vaultIsLocked` are being shown.
 
 ## Conclusion
 

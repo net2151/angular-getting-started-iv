@@ -1,8 +1,6 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
-    <ion-title>
-      Blank
-    </ion-title>
+    <ion-title> Blank </ion-title>
   </ion-toolbar>
 </ion-header>
 
@@ -20,25 +18,25 @@
     </ion-item>
 
     <ion-item>
-      <div style="flex: auto;">
+      <div style="flex: auto">
         <ion-button expand="block" (click)="setSession(state.session)">Set Session Data</ion-button>
       </div>
     </ion-item>
 
     <ion-item>
-      <div style="flex: auto;">
+      <div style="flex: auto">
         <ion-button expand="block" (click)="restoreSession()">Restore Session Data</ion-button>
       </div>
     </ion-item>
 
     <ion-item>
-      <div style="flex: auto;">
+      <div style="flex: auto">
         <ion-button expand="block" (click)="lockVault()">Lock Vault</ion-button>
       </div>
     </ion-item>
 
     <ion-item>
-      <div style="flex: auto;">
+      <div style="flex: auto">
         <ion-button expand="block" (click)="unlockVault()">Unlock Vault</ion-button>
       </div>
     </ion-item>
@@ -72,7 +70,7 @@
     </ion-item>
 
     <ion-item>
-      <div style="flex: auto;">
+      <div style="flex: auto">
         <ion-button expand="block" (click)="clearVault()">Clear Vault</ion-button>
       </div>
     </ion-item>
@@ -81,7 +79,7 @@
       <ion-label>
         <div>Session Data: {{ state.session }}</div>
         <div>Vault is locked: {{ state.isLocked }}</div>
-        <div>Vault exists: {{ state.vaultExists }}</div>
+        <div>Vault is empty: {{ state.isEmpty }}</div>
       </ion-label>
     </ion-item>
   </ion-list>

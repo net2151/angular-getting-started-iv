@@ -1,10 +1,10 @@
-import { Component } from "@angular/core";
-import { VaultService, VaultServiceState } from "../vault.service";
+import { Component } from '@angular/core';
+import { VaultService, VaultServiceState } from '../vault.service';
 
 @Component({
-  selector: "app-home",
-  templateUrl: "home.page.html",
-  styleUrls: ["home.page.scss"],
+  selector: 'app-home',
+  templateUrl: 'home.page.html',
+  styleUrls: ['home.page.scss'],
 })
 export class HomePage {
   public state: VaultServiceState;
