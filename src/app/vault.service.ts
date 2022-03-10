@@ -45,12 +45,11 @@ export class VaultService {
 
   vault: Vault | BrowserVault;
 
-  constructor(private ngZone: NgZone, private platform: Platform) {
-    this.vault = Capacitor.getPlatform() === 'web' ? new BrowserVault(config) : new Vault(config);
-  }
+  constructor(private ngZone: NgZone, private platform: Platform) { }
 
   async init() {
     await this.platform.ready(); // This is required only for Cordova
+    this.vault = Capacitor.getPlatform() === 'web' ? new BrowserVault(config) : new Vault(config);
 
     this.vault.onLock(() => {
       this.ngZone.run(() => {
